@@ -1,0 +1,8 @@
+
+runjenkins:
+	$(PYTHON_BIN)/python manage.py jenkins --output-dir var/reports --coverage-html-report var/reports/htmlcov \
+		--coverage-exclude */site-packages/*,*/migrations/*,*/lib/* $(jenkins_test_modules) \
+		--liveserver=localhost:$(DJANGO_TEST_PORT) $(DJANGO_POSTFIX)
+
+deploy:
+	$(LOCALPATH)/../kill.sh
