@@ -1,0 +1,38 @@
+
+callcommand:
+	@$(PYTHON_BIN)/python manage.py $(command) $(DJANGO_POSTFIX)
+
+runserver:
+	$(PYTHON_BIN)/python manage.py runserver --insecure $(DJANGO_POSTFIX)
+
+schemamigration:
+	$(PYTHON_BIN)/python manage.py schemamigration $(app) --auto $(DJANGO_POSTFIX)
+
+showenv.generic:
+	@echo 'Environment:'
+	@echo '-----------------------'
+	@$(PYTHON_BIN)/python -c "import sys; print 'sys.path:', sys.path"
+	@echo 'PYTHONPATH:' $(PYTHONPATH)
+	@echo 'PROJECT:' $(PROJECT)
+	@echo 'DJANGO_SETTINGS_MODULE:' $(DJANGO_SETTINGS_MODULE)
+	@echo 'DJANGO_TEST_SETTINGS_MODULE:' $(DJANGO_TEST_SETTINGS_MODULE)
+	@echo 'DB_ENGINE:' $(DB_ENGINE)
+
+showenv: showenv.generic
+	@echo 'VIRTUAL_ENV:' $(VIRTUAL_ENV)
+	@echo 'PATH:' $(PATH)
+
+djangohelp:
+	@$(PYTHON_BIN)/django-admin.py help $(DJANGO_POSTFIX)
+
+deploy:
+	@TYPE="$(type)";BRANCH="$(branch)";REPO="$(repo)";if [[ -n "$$BRANCH" ]] && [[ -n "$$REPO" ]] && [ "$$TYPE" == "branch" ]; then ssh -p $(SSH_PORT) $(SSH_USER)@$(SSH_HOST) 'cd $(DJANGO_APPS_PATH)/$(PROJECT)-$(type)/app;git fetch $(repo);git checkout -f $(repo)/$(branch);'; else  ssh -p $(SSH_PORT) $(SSH_USER)@$(SSH_HOST) 'cd $(DJANGO_APPS_PATH)/$(PROJECT)-$(type)/app;git fetch $(repo);git checkout -f $(repo)/$(type);';fi;
+	@ssh -p $(SSH_PORT) $(SSH_USER)@$(SSH_HOST) 'cd $(DJANGO_APPS_PATH)/$(PROJECT)-$(type)/app;make install;make deploy;';
+
+runjenkins:
+	@TYPE="$(type)";BRANCH="$(branch)";REPO="$(repo)";if [[ -n "$$BRANCH" ]] && [[ -n "$$REPO" ]] && [ "$$TYPE" == "branch" ]; then ssh -p $(SSH_PORT) $(SSH_USER)@$(SSH_HOST) 'cd $(DJANGO_APPS_PATH)/$(PROJECT)-$(type)/app;git fetch $(repo);git checkout -f $(repo)/$(branch);'; fi;
+	@wget -O /dev/null $(JENKINS_URL)/job/$(PROJECT)-$(type)/build?token=$(TOKEN_NAME)
+	@$(OPENHTML) $(JENKINS_URL)/job/$(PROJECT)-$(type)
+
+dumpdata:
+	make callcommand command="dumpdata --indent 5 $(pkg)" > data/dev/init.json
