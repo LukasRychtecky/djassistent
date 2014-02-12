@@ -36,3 +36,6 @@ runjenkins:
 
 dumpdata:
 	make callcommand command="dumpdata --indent 5 $(pkg)" > data/dev/init.json
+
+merged:
+	$(SHELL) $(TASK_DIR)/delete-merged.sh
